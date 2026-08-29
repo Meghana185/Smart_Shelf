@@ -10,15 +10,8 @@ Smart Shelf is a full-stack inventory management system designed to automate pro
 | :--- | :--- | :--- |
 | 🌐 **Frontend Application** | [https://smart-shelf-frontend-grxl.onrender.com](https://smart-shelf-frontend-grxl.onrender.com) | Customer & Staff Web Portal |
 | ⚙️ **Django REST API** | [https://smart-shelf-backend-79li.onrender.com/api/](https://smart-shelf-backend-79li.onrender.com/api/) | Core Backend & ML Predictor API |
-| 📱 **WhatsApp QR Link** | [https://whatsapp-service-04k8.onrender.com/qr](https://whatsapp-service-04k8.onrender.com/qr) | WhatsApp Pairing Portal |
 
 ---
-
-## 🔑 Demo Credentials
-
-- 👑 **Admin Portal**: Username: `admin` | Password: `adminpass`
-- 👨‍🍳 **Staff POS Login**: Username: `staff` | Password: `staffpass`
-- 📱 **Customer OTP Login**: Phone Number: `9876543210`
 
 ## Technical Stack Overview
 
