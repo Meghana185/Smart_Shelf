@@ -39,11 +39,17 @@ from .ai.groq_client import generate_recipes_from_ingredients, chat_with_recipe_
 
 @api_view(['GET'])
 def health_check(request):
+    from django.conf import settings
+    db_engine = settings.DATABASES['default']['ENGINE']
+    db_name = settings.DATABASES['default'].get('NAME', 'unknown')
     return Response({
         'status': 'healthy',
         'message': 'Smart Shelf API is running',
-        'app': 'Smart Shelf Backend'
+        'app': 'Smart Shelf Backend',
+        'database_engine': db_engine,
+        'database_name': str(db_name),
     })
+
 
 
 class LoginView(APIView):
