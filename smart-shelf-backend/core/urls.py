@@ -1,5 +1,8 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from django.core.management import call_command
 from .views import (
     health_check,
     LoginView,
@@ -21,8 +24,22 @@ router = DefaultRouter()
 router.register(r'categories', CategoryViewSet, basename='category')
 router.register(r'products', ProductViewSet, basename='product')
 
+@api_view(['GET'])
+def setup_demo_data(request):
+    """Temporary endpoint to seed demo data on fresh PostgreSQL deployment."""
+    try:
+        call_command('seed_demo_data')
+        return Response({
+            'status': 'success',
+            'message': 'Demo data seeded! Admin: admin/adminpass | Staff: staff/staffpass',
+        })
+    except Exception as e:
+        return Response({'status': 'error', 'detail': str(e)}, status=500)
+
+
 urlpatterns = [
     path('health/', health_check, name='api-health-check'),
+    path('setup/', setup_demo_data, name='setup-demo-data'),
     path('auth/login/', LoginView.as_view(), name='api-login'),
     path('auth/request-otp/', RequestOTPView.as_view(), name='api-request-otp'),
     path('auth/verify-otp/', VerifyOTPView.as_view(), name='api-verify-otp'),
