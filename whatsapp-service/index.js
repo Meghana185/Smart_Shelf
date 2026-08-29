@@ -27,6 +27,16 @@ function findBrowserExecutable() {
         console.log(`[WhatsApp] Using env CHROMIUM_PATH: ${process.env.CHROMIUM_PATH}`);
         return process.env.CHROMIUM_PATH;
     }
+    try {
+        const puppeteer = require('puppeteer');
+        const pPath = puppeteer.executablePath();
+        if (pPath && fs.existsSync(pPath)) {
+            console.log(`[WhatsApp] Using Puppeteer downloaded Chrome executable: ${pPath}`);
+            return pPath;
+        }
+    } catch (e) {
+        console.log('[WhatsApp] Puppeteer executablePath lookup info:', e.message);
+    }
     const candidatePaths = [
         '/usr/bin/chromium',
         '/usr/bin/chromium-browser',

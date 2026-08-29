@@ -4,7 +4,8 @@
   "description": "Self-hosted WhatsApp messaging service for Smart Shelf using whatsapp-web.js",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "postinstall": "npx puppeteer install"
   },
   "dependencies": {
     "express": "^4.18.2",
