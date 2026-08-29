@@ -1,17 +1,16 @@
 {
   "name": "smart-shelf-whatsapp-service",
   "version": "1.0.0",
-  "description": "Self-hosted WhatsApp messaging service for Smart Shelf using whatsapp-web.js",
+  "description": "Self-hosted WhatsApp messaging service for Smart Shelf using Baileys",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
-    "postinstall": "npx puppeteer install"
+    "start": "node index.js"
   },
   "dependencies": {
+    "@whiskeysockets/baileys": "^6.7.1",
     "express": "^4.18.2",
-    "puppeteer": "^22.6.0",
+    "pino": "^8.19.0",
     "qrcode": "^1.5.4",
-    "qrcode-terminal": "^0.12.0",
-    "whatsapp-web.js": "^1.23.0"
+    "qrcode-terminal": "^0.12.0"
   }
 }
