@@ -1,0 +1,117 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: smart_shelf_db
+    environment:
+      POSTGRES_DB: smart_shelf_db
+      POSTGRES_USER: smart_shelf_user
+      POSTGRES_PASSWORD: smart_shelf_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U smart_shelf_user -d smart_shelf_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: smart_shelf_redis
+    ports:
+      - "6379:6379"
+
+  backend:
+    build:
+      context: ./smart-shelf-backend
+      dockerfile: Dockerfile
+    container_name: smart_shelf_backend
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py seed_demo_data &&
+             python manage.py collectstatic --noinput &&
+             gunicorn smartshelf.wsgi:application --bind 0.0.0.0:8000"
+    ports:
+      - "8000:8000"
+    environment:
+      - SECRET_KEY=django-insecure-docker-demo-key-smart-shelf
+      - DEBUG=1
+      - DATABASE_URL=postgres://smart_shelf_user:smart_shelf_password@db:5432/smart_shelf_db
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - TWILIO_ACCOUNT_SID=${TWILIO_ACCOUNT_SID:-AC_MOCK_SID}
+      - TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN:-MOCK_AUTH_TOKEN}
+      - TWILIO_PHONE_NUMBER=${TWILIO_PHONE_NUMBER:-+15550001111}
+      - GROQ_API_KEY=${GROQ_API_KEY:-your_groq_api_key_here}
+      - WHATSAPP_SERVICE_URL=http://whatsapp_service:3001
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  celery_worker:
+    build:
+      context: ./smart-shelf-backend
+      dockerfile: Dockerfile
+    container_name: smart_shelf_celery_worker
+    command: celery -A smartshelf worker -l info
+    environment:
+      - SECRET_KEY=django-insecure-docker-demo-key-smart-shelf
+      - DEBUG=1
+      - DATABASE_URL=postgres://smart_shelf_user:smart_shelf_password@db:5432/smart_shelf_db
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - TWILIO_ACCOUNT_SID=${TWILIO_ACCOUNT_SID:-AC_MOCK_SID}
+      - TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN:-MOCK_AUTH_TOKEN}
+      - TWILIO_PHONE_NUMBER=${TWILIO_PHONE_NUMBER:-+15550001111}
+      - WHATSAPP_SERVICE_URL=http://whatsapp_service:3001
+    depends_on:
+      - backend
+      - redis
+
+  celery_beat:
+    build:
+      context: ./smart-shelf-backend
+      dockerfile: Dockerfile
+    container_name: smart_shelf_celery_beat
+    command: celery -A smartshelf beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    environment:
+      - SECRET_KEY=django-insecure-docker-demo-key-smart-shelf
+      - DEBUG=1
+      - DATABASE_URL=postgres://smart_shelf_user:smart_shelf_password@db:5432/smart_shelf_db
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - WHATSAPP_SERVICE_URL=http://whatsapp_service:3001
+    depends_on:
+      - backend
+      - redis
+
+  whatsapp_service:
+    build:
+      context: ./whatsapp-service
+      dockerfile: Dockerfile
+    container_name: smart_shelf_whatsapp
+    ports:
+      - "3001:3001"
+    environment:
+      - PORT=3001
+    volumes:
+      - whatsapp_session:/app/wwebjs_auth
+
+  frontend:
+    build:
+      context: ./smart-shelf-frontend
+      dockerfile: Dockerfile
+    container_name: smart_shelf_frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  whatsapp_session:
