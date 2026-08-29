@@ -37,9 +37,18 @@ def setup_demo_data(request):
         return Response({'status': 'error', 'detail': str(e)}, status=500)
 
 
+@api_view(['GET'])
+def clear_demo_products(request):
+    """Temporary endpoint to delete all demo products from PostgreSQL."""
+    from core.models import Product
+    count, _ = Product.objects.all().delete()
+    return Response({'status': 'success', 'message': f'Deleted {count} products from database.'})
+
+
 urlpatterns = [
     path('health/', health_check, name='api-health-check'),
     path('setup/', setup_demo_data, name='setup-demo-data'),
+    path('clear-products/', clear_demo_products, name='clear-demo-products'),
     path('auth/login/', LoginView.as_view(), name='api-login'),
     path('auth/request-otp/', RequestOTPView.as_view(), name='api-request-otp'),
     path('auth/verify-otp/', VerifyOTPView.as_view(), name='api-verify-otp'),
