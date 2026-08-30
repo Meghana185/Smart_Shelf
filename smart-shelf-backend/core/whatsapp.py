@@ -24,21 +24,27 @@ def format_phone(phone: str) -> str:
 
 def send_whatsapp_message(phone: str, message: str) -> bool:
     """
-    Send a WhatsApp message via the self-hosted whatsapp-web.js service.
+    Send a WhatsApp message via the self-hosted Baileys service.
     POST {WHATSAPP_SERVICE_URL}/send-message
-    body: { "phone": "919876543210", "message": "..." }
+    body: { "phone": "919876543210", "phone_number": "919876543210", "message": "..." }
 
     Returns True on success, False on failure.
     Does NOT raise — calling endpoints will always continue even if messaging fails.
     """
     formatted_phone = format_phone(phone)
-    url = f"{WHATSAPP_SERVICE_URL}/send-message"
+    base_url = WHATSAPP_SERVICE_URL.rstrip('/')
+    url = f"{base_url}/send-message"
 
     try:
+        payload = {
+            "phone": formatted_phone,
+            "phone_number": formatted_phone,
+            "message": message
+        }
         response = requests.post(
             url,
-            json={"phone": formatted_phone, "message": message},
-            timeout=10
+            json=payload,
+            timeout=15
         )
         res_data = response.json() if response.headers.get('content-type', '').startswith('application/json') else {"raw": response.text}
 

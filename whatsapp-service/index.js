@@ -155,10 +155,11 @@ app.get('/qr', (req, res) => {
 
 // POST /send-message
 app.post('/send-message', async (req, res) => {
-    const { phone_number, message } = req.body;
+    const phone = req.body.phone_number || req.body.phone;
+    const message = req.body.message;
 
-    if (!phone_number || !message) {
-        return res.status(400).json({ error: 'phone_number and message are required' });
+    if (!phone || !message) {
+        return res.status(400).json({ error: 'phone or phone_number and message are required' });
     }
 
     if (!isReady || !sock) {
@@ -166,12 +167,12 @@ app.post('/send-message', async (req, res) => {
     }
 
     try {
-        const jid = formatPhoneJid(phone_number);
+        const jid = formatPhoneJid(phone);
         await sock.sendMessage(jid, { text: message });
-        console.log(`[WhatsApp] ✅ Sent message to ${phone_number}`);
+        console.log(`[WhatsApp] ✅ Sent message to ${phone}`);
         return res.json({ success: true });
     } catch (err) {
-        console.error(`[WhatsApp] ❌ Failed to send to ${phone_number}:`, err.message);
+        console.error(`[WhatsApp] ❌ Failed to send to ${phone}:`, err.message);
         return res.status(500).json({ success: false, error: err.message });
     }
 });

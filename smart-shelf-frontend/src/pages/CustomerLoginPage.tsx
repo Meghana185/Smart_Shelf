@@ -26,20 +26,12 @@ export const CustomerLoginPage: React.FC = () => {
         phone_number: phoneNumber.trim(),
       });
 
-      setInfoMessage(res.data.detail || 'OTP sent to your phone. Please check your SMS inbox.');
-      if (res.data.dev_otp) {
-        setOtpCode(res.data.dev_otp);
-      } else {
-        setOtpCode('');
-      }
+      setInfoMessage(res.data.detail || 'OTP sent to your WhatsApp. Please check your messages.');
+      setOtpCode('');
       setStep(2);
 
     } catch (err: any) {
-      if (err.response?.data?.dev_otp) {
-        setError(err.response.data.detail);
-        setOtpCode(err.response.data.dev_otp);
-        setStep(2);
-      } else if (err.response?.data?.detail) {
+      if (err.response?.data?.detail) {
         setError(err.response.data.detail);
       } else {
         setError('Failed to send OTP. Please check phone number.');
