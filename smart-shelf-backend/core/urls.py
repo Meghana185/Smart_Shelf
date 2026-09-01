@@ -18,6 +18,7 @@ from .views import (
     ChatbotConversationView,
     StaffManagementView,
     StaffDeactivateView,
+    TriggerExpiryAlertsView,
 )
 
 router = DefaultRouter()
@@ -60,6 +61,7 @@ urlpatterns = [
     path('predictions/near-expiry-risk/', ExpiryRiskPredictionView.as_view(), name='near-expiry-risk-predictions'),
     path('chatbot/recipe-suggestions/', RecipeSuggestionsView.as_view(), name='chatbot-recipe-suggestions'),
     path('chatbot/chat/', ChatbotConversationView.as_view(), name='chatbot-chat'),
+    path('notifications/trigger-expiry-alerts/', TriggerExpiryAlertsView.as_view(), name='trigger-expiry-alerts'),
     path('', include(router.urls)),
 ]
 
