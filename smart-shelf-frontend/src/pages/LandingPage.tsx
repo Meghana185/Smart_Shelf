@@ -11,8 +11,10 @@ import {
   TrendingUp,
   Bot,
   BellRing,
-  Receipt
+  Receipt,
+  Sparkles
 } from 'lucide-react';
+
 
 export const LandingPage: React.FC = () => {
   const { scrollYProgress } = useScroll();
