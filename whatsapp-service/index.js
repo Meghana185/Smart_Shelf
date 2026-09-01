@@ -16,8 +16,11 @@ const pino = require('pino');
 const fs = require('fs');
 const path = require('path');
 
+const { Pool } = require('pg');
+
 const PORT = process.env.PORT || 3001;
 const AUTH_DIR = process.env.WWEBJS_AUTH_PATH || path.join(__dirname, 'baileys_auth');
+const DATABASE_URL = process.env.DATABASE_URL;
 
 const app = express();
 app.use(express.json());
@@ -25,8 +28,79 @@ app.use(express.json());
 let sock = null;
 let isReady = false;
 let currentQRDataUrl = null;
+let dbPool = null;
+
+if (DATABASE_URL) {
+    dbPool = new Pool({
+        connectionString: DATABASE_URL,
+        ssl: DATABASE_URL.includes('localhost') ? false : { rejectUnauthorized: false }
+    });
+}
+
+// Ensure auth folder and restore from database if available
+async function initDbAuth() {
+    if (!fs.existsSync(AUTH_DIR)) {
+        fs.mkdirSync(AUTH_DIR, { recursive: true });
+    }
+
+    if (!dbPool) return;
+
+    try {
+        await dbPool.query(`
+            CREATE TABLE IF NOT EXISTS whatsapp_session_auth (
+                key VARCHAR(255) PRIMARY KEY,
+                value TEXT NOT NULL,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        `);
+        console.log('[PostgreSQL] WhatsApp session storage table ready.');
+
+        const res = await dbPool.query('SELECT key, value FROM whatsapp_session_auth');
+        if (res.rows.length > 0) {
+            for (const row of res.rows) {
+                const filePath = path.join(AUTH_DIR, row.key);
+                fs.writeFileSync(filePath, row.value, 'utf-8');
+            }
+            console.log(`[PostgreSQL] Restored ${res.rows.length} session credential files from PostgreSQL database!`);
+        }
+    } catch (err) {
+        console.error('[PostgreSQL] Session init/restore notice:', err.message);
+    }
+}
+
+async function syncAuthToDb() {
+    if (!dbPool || !fs.existsSync(AUTH_DIR)) return;
+    try {
+        const files = fs.readdirSync(AUTH_DIR);
+        for (const file of files) {
+            const filePath = path.join(AUTH_DIR, file);
+            if (fs.statSync(filePath).isFile()) {
+                const content = fs.readFileSync(filePath, 'utf-8');
+                await dbPool.query(`
+                    INSERT INTO whatsapp_session_auth (key, value, updated_at)
+                    VALUES ($1, $2, CURRENT_TIMESTAMP)
+                    ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = CURRENT_TIMESTAMP;
+                `, [file, content]);
+            }
+        }
+    } catch (err) {
+        console.error('[PostgreSQL] Sync session credentials notice:', err.message);
+    }
+}
+
+async function clearDbAuth() {
+    if (!dbPool) return;
+    try {
+        await dbPool.query('DELETE FROM whatsapp_session_auth');
+        console.log('[PostgreSQL] WhatsApp session credentials cleared from database.');
+    } catch (err) {
+        console.error('[PostgreSQL] Clear session credentials notice:', err.message);
+    }
+}
 
 async function startBaileys() {
+    await initDbAuth();
+
     try {
         const { state, saveCreds } = await useMultiFileAuthState(AUTH_DIR);
         const { version } = await fetchLatestBaileysVersion();
@@ -38,7 +112,10 @@ async function startBaileys() {
             printQRInTerminal: false,
         });
 
-        sock.ev.on('creds.update', saveCreds);
+        sock.ev.on('creds.update', async () => {
+            await saveCreds();
+            await syncAuthToDb();
+        });
 
         sock.ev.on('connection.update', async (update) => {
             const { connection, lastDisconnect, qr } = update;
@@ -60,6 +137,7 @@ async function startBaileys() {
             if (connection === 'open') {
                 isReady = true;
                 currentQRDataUrl = null;
+                await syncAuthToDb();
                 console.log('\n✅ WhatsApp client successfully authenticated & ready!');
                 console.log('Service listening for messaging requests on port', PORT);
             }
@@ -74,6 +152,7 @@ async function startBaileys() {
                     setTimeout(startBaileys, 3000);
                 } else {
                     console.log('[WhatsApp] Logged out. Clearing credentials to allow new QR scan...');
+                    await clearDbAuth();
                     if (fs.existsSync(AUTH_DIR)) {
                         fs.rmSync(AUTH_DIR, { recursive: true, force: true });
                     }
@@ -86,6 +165,7 @@ async function startBaileys() {
         setTimeout(startBaileys, 5000);
     }
 }
+
 
 function formatPhoneJid(rawPhone) {
     let clean = rawPhone.replace(/\D/g, '');
