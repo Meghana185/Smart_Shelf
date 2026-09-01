@@ -209,47 +209,116 @@ export const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* PLATFORM FEATURES SHOWCASE */}
-      <section className="py-16 bg-white border-t border-b border-emerald-200/60">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+      {/* PLATFORM FEATURES SHOWCASE — CONNECTED 1-2-3 CIRCLES */}
+      <section className="py-20 bg-white border-t border-b border-emerald-200/60 relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
           <div className="text-center max-w-2xl mx-auto space-y-3">
-            <div className="text-xs font-extrabold uppercase tracking-wider text-emerald-700">Smart Features</div>
-            <h2 className="text-3xl font-black text-slate-900">Built for Customers & Smart Kitchens</h2>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100/80 text-emerald-800 text-xs font-black uppercase tracking-wider border border-emerald-200">
+              <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Smart Ecosystem</span>
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
+              Built for Customers & Smart Kitchens
+            </h2>
+            <p className="text-sm text-slate-600 font-medium">
+              An intelligent, interconnected loop that guides your food from the supermarket shelf to your dinner table.
+            </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="bg-emerald-50/50 border border-emerald-200 p-6 rounded-3xl space-y-4 hover:border-emerald-400 transition">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-100 border border-emerald-200 flex items-center justify-center text-emerald-700">
-                <ChefHat className="w-6 h-6" />
-              </div>
-              <h3 className="text-lg font-black text-slate-900">Groq AI Recipe Chatbot</h3>
-              <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                Ask <strong>Chef Smarty 👨‍🍳</strong> anything! Generates delicious recipes, cooking steps, and tips tailored specifically to the items you purchased.
-              </p>
-            </div>
+          {/* Connected Circular Flow Container */}
+          <div className="relative">
+            {/* Horizontal Connecting Bridge Line (Visible on Desktop) */}
+            <div className="hidden md:block absolute top-14 left-[15%] right-[15%] h-1 bg-gradient-to-r from-emerald-400 via-teal-400 to-purple-400 z-0 rounded-full opacity-60" />
 
-            <div className="bg-emerald-50/50 border border-emerald-200 p-6 rounded-3xl space-y-4 hover:border-emerald-400 transition">
-              <div className="w-12 h-12 rounded-2xl bg-teal-100 border border-teal-200 flex items-center justify-center text-teal-700">
-                <MessageSquare className="w-6 h-6" />
-              </div>
-              <h3 className="text-lg font-black text-slate-900">Automated WhatsApp Receipts</h3>
-              <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                Digital receipts and 7-day expiry warnings delivered directly to customer WhatsApp accounts without manual effort.
-              </p>
-            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative z-10">
+              {/* Circle 1 — AI Recipe Chatbot */}
+              <div className="group bg-gradient-to-b from-emerald-50/70 to-white border border-emerald-200 p-8 rounded-3xl space-y-6 hover:shadow-xl hover:border-emerald-500 transition-all duration-300 flex flex-col items-center text-center relative">
+                {/* Numbered Connected Circle 1 */}
+                <div className="relative flex items-center justify-center">
+                  <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-400 text-white flex flex-col items-center justify-center shadow-lg shadow-emerald-500/25 border-4 border-white group-hover:scale-105 transition-transform duration-300">
+                    <span className="text-2xl font-black font-mono leading-none">1</span>
+                    <ChefHat className="w-5 h-5 mt-1 text-emerald-100" />
+                  </div>
+                  <div className="absolute -top-2 -right-2 px-2.5 py-0.5 rounded-full bg-emerald-700 text-[10px] font-black text-white uppercase tracking-wider shadow-sm">
+                    AI Chef
+                  </div>
+                </div>
 
-            <div className="bg-emerald-50/50 border border-emerald-200 p-6 rounded-3xl space-y-4 hover:border-emerald-400 transition">
-              <div className="w-12 h-12 rounded-2xl bg-purple-100 border border-purple-200 flex items-center justify-center text-purple-700">
-                <TrendingUp className="w-6 h-6" />
+                <div className="space-y-2">
+                  <h3 className="text-xl font-black text-slate-900 group-hover:text-emerald-700 transition">
+                    Groq AI Recipe Chatbot
+                  </h3>
+                  <p className="text-xs text-slate-600 leading-relaxed font-medium">
+                    Ask <strong>Chef Smarty 👨‍🍳</strong> anything! Generates delicious recipes, cooking steps, and tips tailored specifically to the items in your cart.
+                  </p>
+                </div>
+
+                <div className="pt-4 border-t border-emerald-100 w-full flex items-center justify-center gap-2 text-xs font-bold text-emerald-700">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span>Instant Recipe Generation</span>
+                </div>
               </div>
-              <h3 className="text-lg font-black text-slate-900">Predictive Expiry Alerts</h3>
-              <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                Never throw away forgotten food again! Get automatic alerts when items in your kitchen inventory are approaching expiry.
-              </p>
+
+              {/* Circle 2 — Automated WhatsApp Receipts */}
+              <div className="group bg-gradient-to-b from-teal-50/70 to-white border border-teal-200 p-8 rounded-3xl space-y-6 hover:shadow-xl hover:border-teal-500 transition-all duration-300 flex flex-col items-center text-center relative">
+                {/* Numbered Connected Circle 2 */}
+                <div className="relative flex items-center justify-center">
+                  <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-teal-600 to-emerald-400 text-white flex flex-col items-center justify-center shadow-lg shadow-teal-500/25 border-4 border-white group-hover:scale-105 transition-transform duration-300">
+                    <span className="text-2xl font-black font-mono leading-none">2</span>
+                    <MessageSquare className="w-5 h-5 mt-1 text-teal-100" />
+                  </div>
+                  <div className="absolute -top-2 -right-2 px-2.5 py-0.5 rounded-full bg-teal-700 text-[10px] font-black text-white uppercase tracking-wider shadow-sm">
+                    Instant
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <h3 className="text-xl font-black text-slate-900 group-hover:text-teal-700 transition">
+                    Automated WhatsApp Receipts
+                  </h3>
+                  <p className="text-xs text-slate-600 leading-relaxed font-medium">
+                    Digital paperless receipts and 7-day expiry warnings delivered directly to customer WhatsApp accounts in real time.
+                  </p>
+                </div>
+
+                <div className="pt-4 border-t border-teal-100 w-full flex items-center justify-center gap-2 text-xs font-bold text-teal-700">
+                  <span className="w-2 h-2 rounded-full bg-teal-500 animate-pulse" />
+                  <span>Zero-Paper Receipts</span>
+                </div>
+              </div>
+
+              {/* Circle 3 — Predictive Expiry Alerts */}
+              <div className="group bg-gradient-to-b from-purple-50/70 to-white border border-purple-200 p-8 rounded-3xl space-y-6 hover:shadow-xl hover:border-purple-500 transition-all duration-300 flex flex-col items-center text-center relative">
+                {/* Numbered Connected Circle 3 */}
+                <div className="relative flex items-center justify-center">
+                  <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-400 text-white flex flex-col items-center justify-center shadow-lg shadow-purple-500/25 border-4 border-white group-hover:scale-105 transition-transform duration-300">
+                    <span className="text-2xl font-black font-mono leading-none">3</span>
+                    <TrendingUp className="w-5 h-5 mt-1 text-purple-100" />
+                  </div>
+                  <div className="absolute -top-2 -right-2 px-2.5 py-0.5 rounded-full bg-purple-700 text-[10px] font-black text-white uppercase tracking-wider shadow-sm">
+                    ML Alerts
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <h3 className="text-xl font-black text-slate-900 group-hover:text-purple-700 transition">
+                    Predictive Expiry Alerts
+                  </h3>
+                  <p className="text-xs text-slate-600 leading-relaxed font-medium">
+                    Never throw away forgotten food again! Machine Learning algorithms predict expiry risk and notify you before items spoil.
+                  </p>
+                </div>
+
+                <div className="pt-4 border-t border-purple-100 w-full flex items-center justify-center gap-2 text-xs font-bold text-purple-700">
+                  <span className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />
+                  <span>AI Waste Prevention</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </section>
+
 
       {/* FOOTER */}
       <footer className="bg-slate-900 text-slate-400 py-12 px-4 sm:px-6 lg:px-8">
