@@ -257,13 +257,35 @@ app.post('/send-message', async (req, res) => {
     }
 });
 
-// Health check endpoint
-app.get('/health', (req, res) => {
-    res.json({ status: isReady ? 'ready' : 'waiting_for_qr' });
+// Health check endpoint with diagnostics
+app.get('/health', async (req, res) => {
+    let credsCount = 0;
+    if (fs.existsSync(AUTH_DIR)) {
+        try {
+            credsCount = fs.readdirSync(AUTH_DIR).length;
+        } catch (e) {}
+    }
+
+    let dbAuthCount = 0;
+    if (dbPool) {
+        try {
+            const dbRes = await dbPool.query('SELECT count(*) FROM whatsapp_session_auth');
+            dbAuthCount = parseInt(dbRes.rows[0].count, 10) || 0;
+        } catch (e) {}
+    }
+
+    res.json({
+        status: isReady ? 'ready' : 'waiting_for_qr',
+        is_ready: isReady,
+        postgres_connected: !!dbPool,
+        db_saved_keys_count: dbAuthCount,
+        disk_files_count: credsCount
+    });
 });
 
 app.listen(PORT, () => {
-    console.log(`\n🚀 Smart Shelf WhatsApp Service starting on http://localhost:${PORT}`);
-    console.log(`📱 QR Web Page available at: http://localhost:${PORT}/qr\n`);
+    console.log(`\n🚀 Smart Shelf WhatsApp Service starting on port ${PORT}`);
+    console.log(`📱 QR Web Page available at: /qr\n`);
     startBaileys();
 });
+
