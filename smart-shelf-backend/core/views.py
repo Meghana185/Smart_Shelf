@@ -392,12 +392,12 @@ class RequestOTPView(APIView):
         wa_success = send_whatsapp_message(phone_number, message)
 
         if not wa_success:
-            print(f"[OTP DEV FALLBACK] WhatsApp send failed. Code for {phone_number}: {code}")
+            print(f"[OTP FALLBACK] WhatsApp send failed. Code for {phone_number}: {code}")
             return Response({
-                'detail': 'WhatsApp service not linked. Please scan QR at https://whatsapp-service-04k8.onrender.com/qr to connect.',
+                'detail': f"WhatsApp service is awaiting QR scan. Your OTP is: {code}",
                 'phone_number': phone_number,
                 'dev_otp': code,
-            }, status=status.HTTP_400_BAD_REQUEST)
+            }, status=status.HTTP_200_OK)
 
         return Response({
             'detail': f'OTP code sent to {phone_number} via WhatsApp. Please check your phone.',
