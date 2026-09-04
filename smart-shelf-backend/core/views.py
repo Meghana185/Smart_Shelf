@@ -502,15 +502,28 @@ class ExpiryRiskPredictionView(APIView):
         today = timezone.now().date()
         in_14_days = today + timedelta(days=14)
 
-        near_expiry_products = Product.objects.filter(expiry_date__lte=in_14_days).select_related('category')
+        # AI Discount recommendations apply ONLY to active, unexpired items currently on shelves
+        # Expired items (expiry_date < today or status='expired') and Cleared items (status='cleared')
+        # CANNOT be sold and must NEVER receive discount recommendations.
+        near_expiry_products = Product.objects.filter(
+            status=Product.STATUS_ACTIVE,
+            expiry_date__gte=today,
+            expiry_date__lte=in_14_days,
+            stock_quantity__gt=0
+        ).select_related('category')
 
         if not near_expiry_products.exists():
-            near_expiry_products = Product.objects.all().select_related('category')
+            near_expiry_products = Product.objects.filter(
+                status=Product.STATUS_ACTIVE,
+                expiry_date__gte=today,
+                stock_quantity__gt=0
+            ).select_related('category')
 
         predictions = []
         for product in near_expiry_products:
             pred = predict_expiry_risk(product)
-            predictions.append(pred)
+            if pred.get('days_until_expiry', 0) > 0 and pred.get('risk_level') != 'Expired':
+                predictions.append(pred)
 
         predictions.sort(key=lambda x: x['risk_score'], reverse=True)
         return Response(predictions, status=status.HTTP_200_OK)

@@ -138,6 +138,23 @@ def predict_expiry_risk(product):
 
     risk_score = round(risk_score, 2)
 
+    days_left = (product.expiry_date - date.today()).days
+    if product.status != Product.STATUS_ACTIVE or days_left <= 0:
+        return {
+            'product_id': product.id,
+            'product_name': product.name,
+            'category_name': product.category.name,
+            'stock_quantity': product.stock_quantity,
+            'days_until_expiry': max(0, days_left),
+            'sales_speed': calculate_sales_speed(product),
+            'price': str(product.price),
+            'risk_score': 1.0,
+            'risk_level': 'Expired',
+            'suggested_action': 'discard / do not sell',
+            'suggested_discount_percent': 0,
+            'discounted_price': str(product.price),
+        }
+
     # Determine risk level and suggested action
     if risk_score >= 0.70:
         risk_level = "High"
@@ -149,7 +166,7 @@ def predict_expiry_risk(product):
         risk_level = "Low"
         suggested_action = "just monitor"
 
-    days_until_expiry = max(0, (product.expiry_date - date.today()).days)
+    days_until_expiry = days_left
     sales_speed = calculate_sales_speed(product)
 
     # Calculate AI-suggested discount percentage & discounted price

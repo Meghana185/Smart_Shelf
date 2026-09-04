@@ -352,7 +352,11 @@ export const AdminDashboard: React.FC = () => {
   const activeProducts = filteredProducts.filter((p) => p.status !== 'expired' && p.status !== 'cleared');
   const expiredProducts = products.filter((p) => p.status === 'expired' || p.status === 'cleared');
 
-  const highRiskCount = predictions.filter((p) => p.risk_level === 'High').length;
+  // AI Discount recommendations apply ONLY to active, unexpired products with days_until_expiry > 0
+  const activeHighRiskPredictions = predictions.filter(
+    (p) => p.risk_level === 'High' && p.days_until_expiry > 0 && p.stock_quantity > 0
+  );
+  const highRiskCount = activeHighRiskPredictions.length;
   const totalStockCount = activeProducts.reduce((acc, p) => acc + p.stock_quantity, 0);
   const totalSoldUnits = products.reduce((acc, p) => acc + (p.total_sold || 0), 0);
 
@@ -445,18 +449,18 @@ export const AdminDashboard: React.FC = () => {
               </div>
             </div>
             <span className="px-3 py-1 bg-rose-100 text-rose-800 font-bold text-xs rounded-xl border border-rose-200 self-start sm:self-auto">
-              {predictions.filter(p => p.risk_level === 'High').length} High Risk Items
+              {activeHighRiskPredictions.length} High Risk Items
             </span>
           </div>
 
-          {predictions.filter(p => p.risk_level === 'High').length === 0 ? (
+          {activeHighRiskPredictions.length === 0 ? (
             <div className="p-6 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center gap-3 text-emerald-800 text-sm font-bold">
               <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
               <span>All store products are currently healthy! No high-risk items requiring discount clearance.</span>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {predictions.filter(p => p.risk_level === 'High').map((item) => {
+              {activeHighRiskPredictions.map((item) => {
                 const discount = item.suggested_discount_percent || (item.days_until_expiry <= 3 ? 50 : item.days_until_expiry <= 7 ? 30 : 20);
                 const originalPrice = parseFloat(item.price);
                 const discountPrice = item.discounted_price || (originalPrice * (1 - discount / 100)).toFixed(2);
