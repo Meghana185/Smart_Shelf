@@ -169,18 +169,14 @@ def predict_expiry_risk(product):
     days_until_expiry = days_left
     sales_speed = calculate_sales_speed(product)
 
-    # Calculate AI-suggested discount percentage & discounted price
+    # Calculate AI-suggested discount percentage & discounted price (only for items expiring within 7 days)
     if risk_level == "High":
         if days_until_expiry <= 3:
             discount_percent = 50
         elif days_until_expiry <= 7:
             discount_percent = 30
-        elif days_until_expiry <= 14:
-            discount_percent = 20
         else:
-            discount_percent = 15
-    elif risk_level == "Medium":
-        discount_percent = 10
+            discount_percent = 0
     else:
         discount_percent = 0
 

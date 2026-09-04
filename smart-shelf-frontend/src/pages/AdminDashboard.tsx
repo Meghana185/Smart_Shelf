@@ -352,9 +352,9 @@ export const AdminDashboard: React.FC = () => {
   const activeProducts = filteredProducts.filter((p) => p.status !== 'expired' && p.status !== 'cleared');
   const expiredProducts = products.filter((p) => p.status === 'expired' || p.status === 'cleared');
 
-  // AI Discount recommendations apply ONLY to active, unexpired products with days_until_expiry > 0
+  // AI Discount recommendations apply ONLY to active, unexpired products with 1 to 7 days left before expiry
   const activeHighRiskPredictions = predictions.filter(
-    (p) => p.risk_level === 'High' && p.days_until_expiry > 0 && p.stock_quantity > 0
+    (p) => p.risk_level === 'High' && p.days_until_expiry >= 1 && p.days_until_expiry <= 7 && p.stock_quantity > 0
   );
   const highRiskCount = activeHighRiskPredictions.length;
   const totalStockCount = activeProducts.reduce((acc, p) => acc + p.stock_quantity, 0);
@@ -428,7 +428,7 @@ export const AdminDashboard: React.FC = () => {
 
           <div className="bg-white border border-slate-200 p-6 rounded-3xl shadow-sm space-y-2">
             <div className="flex items-center justify-between text-slate-500 text-xs font-bold uppercase tracking-wider">
-              <span>High Expiry Risk</span>
+              <span>High Expiry Risk (≤ 7 Days)</span>
               <AlertTriangle className="w-5 h-5 text-rose-600" />
             </div>
             <div className="text-3xl font-black text-rose-600 font-mono">{highRiskCount}</div>
@@ -445,7 +445,7 @@ export const AdminDashboard: React.FC = () => {
               </div>
               <div>
                 <h2 className="text-lg font-black text-slate-900">High Expiry Risk Products & AI Discount Recommendations</h2>
-                <p className="text-xs text-slate-500 font-medium">Items predicted by Machine Learning to expire before selling out</p>
+                <p className="text-xs text-slate-500 font-medium">Items predicted by Machine Learning to expire within 7 days before selling out</p>
               </div>
             </div>
             <span className="px-3 py-1 bg-rose-100 text-rose-800 font-bold text-xs rounded-xl border border-rose-200 self-start sm:self-auto">
