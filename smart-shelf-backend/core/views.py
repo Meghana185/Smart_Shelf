@@ -16,7 +16,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import Category, Product, Customer, Purchase, PurchaseItem, UserProfile, OTPCode
 from django.shortcuts import get_object_or_404
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from .serializers import (
     CategorySerializer,
     ProductSerializer,
@@ -619,60 +619,29 @@ class ChatbotConversationView(APIView):
 
 
 class TriggerExpiryAlertsView(APIView):
-    permission_classes = [IsAuthenticated]
+    """
+    Endpoint to trigger automated daily expiry checks and WhatsApp alerts.
+    Accessible via GET or POST by external cron jobs (e.g., cron-job.org / Render Cron / UptimeRobot)
+    or internal triggers.
+    """
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        return self._trigger_alerts(request)
 
     def post(self, request):
-        today = timezone.now().date()
-        in_7_days = today + timedelta(days=7)
-        frontend_url = getattr(settings, 'FRONTEND_URL', 'https://smart-shelf-frontend-grxl.onrender.com')
+        return self._trigger_alerts(request)
 
-        near_expiry_items = PurchaseItem.objects.filter(
-            product__expiry_date__lte=in_7_days
-        ).select_related('purchase__customer', 'product')
-
-        notified_count = 0
-        for item in near_expiry_items:
-            customer_phone = item.purchase.customer.phone_number
-            customer_name = item.purchase.customer.name or ''
-            greeting = f"Hello {customer_name.strip()}! 👋" if customer_name and customer_name.strip() else "Hello! 👋"
-            product_name = item.product.name
-            expiry_date = item.product.expiry_date
-            days_left = (expiry_date - today).days
-
-            if days_left < 0:
-                days_ago = abs(days_left)
-                message = (
-                    f"{greeting}\n\n"
-                    f"⚠️ *EXPIRY NOTICE*: Your purchased item *{product_name}* has ALREADY EXPIRED ({days_ago} day(s) ago on {expiry_date})!\n\n"
-                    f"Please do not consume expired items. View fresh recipe ideas here:\n"
-                    f"{frontend_url}/login/customer"
-                )
-            elif days_left == 0:
-                message = (
-                    f"{greeting}\n\n"
-                    f"⏰ *EXPIRY ALERT*: Your purchased item *{product_name}* EXPIRES TODAY ({expiry_date})!\n\n"
-                    f"Use it today before it goes to waste — view recipe ideas here:\n"
-                    f"{frontend_url}/login/customer"
-                )
-            else:
-                message = (
-                    f"{greeting}\n\n"
-                    f"⏰ *EXPIRY REMINDER*: Only {days_left} day(s) left! Your purchased item *{product_name}* expires on {expiry_date}.\n\n"
-                    f"Use it before it goes to waste — view recipe ideas here:\n"
-                    f"{frontend_url}/login/customer"
-                )
-
-            sent = send_whatsapp_message(customer_phone, message)
-            if sent:
-                item.expiry_notification_sent = True
-                item.save(update_fields=['expiry_notification_sent'])
-                notified_count += 1
-
+    def _trigger_alerts(self, request):
+        from .tasks import check_near_expiry_purchases, update_expired_products_status
+        update_expired_products_status()
+        result = check_near_expiry_purchases()
         return Response({
             'status': 'success',
-            'notified_count': notified_count,
-            'message': f"Sent {notified_count} near-expiry WhatsApp alert(s) to customers."
+            'result': result,
+            'message': "Daily expiry checks & WhatsApp reminders processed successfully."
         }, status=status.HTTP_200_OK)
+
 
 
 

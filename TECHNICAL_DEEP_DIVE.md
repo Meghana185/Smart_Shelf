@@ -662,5 +662,3 @@ This is why on free Render, you may need to rescan after the container restarts 
 | Code Storage | Git + GitHub | GitHub.com | Version history, Render auto-deploys on push |
 
 ---
-
-Made with love by Meghana H A — Smart Shelf Project, August 2026

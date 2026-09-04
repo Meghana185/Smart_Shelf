@@ -366,11 +366,38 @@ class SmartShelfAPITestCase(TestCase):
         self.assertIn("Fresh Cream", called_msg)
         self.assertIn(str(self.today + timedelta(days=4)), called_msg)
 
-        # Verify flag updated in database
+        # Verify flag and last_expiry_notification_date updated in database
         item1.refresh_from_db()
         item2.refresh_from_db()
         self.assertTrue(item1.expiry_notification_sent)
+        self.assertEqual(item1.last_expiry_notification_date, self.today)
         self.assertFalse(item2.expiry_notification_sent)
+
+        # 2nd run on same day should NOT duplicate message
+        mock_send_sms.reset_mock()
+        result_same_day = check_near_expiry_purchases()
+        self.assertIn("0 near-expiry SMS alerts", result_same_day)
+        mock_send_sms.assert_not_called()
+
+        # Simulating next day run: item1 should receive next day's reminder!
+        item1.last_expiry_notification_date = self.today - timedelta(days=1)
+        item1.save(update_fields=['last_expiry_notification_date'])
+        result_next_day = check_near_expiry_purchases()
+        self.assertIn("1 near-expiry SMS alerts", result_next_day)
+        mock_send_sms.assert_called_once()
+
+    @patch('core.tasks.send_whatsapp_message')
+    def test_trigger_expiry_alerts_public_endpoint(self, mock_send_sms):
+        url = reverse('trigger-expiry-alerts')
+        # Test GET request
+        res_get = self.client.get(url)
+        self.assertEqual(res_get.status_code, status.HTTP_200_OK)
+        self.assertEqual(res_get.json()['status'], 'success')
+
+        # Test POST request
+        res_post = self.client.post(url)
+        self.assertEqual(res_post.status_code, status.HTTP_200_OK)
+        self.assertEqual(res_post.json()['status'], 'success')
 
     @patch('core.tasks.send_whatsapp_message')
     def test_checkout_triggers_sms_notification(self, mock_send_sms):

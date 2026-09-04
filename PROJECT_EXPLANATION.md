@@ -329,5 +329,3 @@ Your project is now accessible by anyone in the world, 24/7, without your laptop
 "Smart Shelf is a full-stack web application for retail stores that uses QR code scanning for instant billing, AI to predict product expiry risks, WhatsApp for automated customer receipts and OTP login, and an AI chatbot to suggest recipes — all deployed live on the cloud."
 
 ---
-
-Made with love by Meghana H A — Smart Shelf Project, August 2026

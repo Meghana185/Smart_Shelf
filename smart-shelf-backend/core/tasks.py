@@ -33,21 +33,32 @@ def send_checkout_sms_task(customer_phone, total_amount, purchase_id, items_summ
     send_whatsapp_message(customer_phone, message)
 
 
+from django.db.models import Q
+
 @shared_task
 def check_near_expiry_purchases():
     """
-    Automatic task that finds any purchased product expiring within 7 days OR ALREADY EXPIRED
-    (that hasn't already been notified) and sends an automatic WhatsApp message to the customer.
-    Marks expiry_notification_sent = True after sending so each item is notified once.
+    Automatic daily task that finds any purchased product expiring within 7 days OR expired within the last 1 day
+    (that hasn't already been notified TODAY) and sends an automatic daily WhatsApp reminder to the customer.
+    Runs every day so customers get daily reminders at 7, 6, 5, 4, 3, 2, 1 days left and on expiry day.
     """
     today = timezone.now().date()
     in_7_days = today + timedelta(days=7)
-    frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:5174')
+    past_1_day = today - timedelta(days=1)
+    frontend_url = getattr(settings, 'FRONTEND_URL', 'https://smart-shelf-frontend-grxl.onrender.com')
 
-    # Find purchase items expiring within 7 days OR already expired that haven't been notified yet
+    # Also update any expired products in inventory
+    try:
+        update_expired_products_status()
+    except Exception as e:
+        logger.warning(f"Failed to update expired products status: {e}")
+
+    # Find purchase items expiring within 7 days (or expired yesterday) that haven't been notified today
     near_expiry_items = PurchaseItem.objects.filter(
-        expiry_notification_sent=False,
-        product__expiry_date__lte=in_7_days
+        product__expiry_date__lte=in_7_days,
+        product__expiry_date__gte=past_1_day
+    ).filter(
+        Q(last_expiry_notification_date__isnull=True) | Q(last_expiry_notification_date__lt=today)
     ).select_related('purchase__customer', 'product')
 
     notified_count = 0
@@ -63,32 +74,40 @@ def check_near_expiry_purchases():
             days_ago = abs(days_left)
             message = (
                 f"{greeting}\n\n"
-                f"⚠️ *EXPIRY NOTICE*: Your purchased item *{product_name}* has ALREADY EXPIRED ({days_ago} day(s) ago on {expiry_date})!\n\n"
+                f"⚠️ *EXPIRY NOTICE*: Your purchased item *{product_name}* EXPIRED {days_ago} day(s) ago (on {expiry_date})!\n\n"
                 f"Please do not consume expired items. View your purchased items & fresh recipe suggestions here:\n"
                 f"{frontend_url}/login/customer"
             )
         elif days_left == 0:
             message = (
                 f"{greeting}\n\n"
-                f"⏰ *EXPIRY ALERT*: Your purchased item *{product_name}* EXPIRES TODAY ({expiry_date})!\n\n"
-                f"Use it today before it goes to waste — view your items & get recipe ideas here:\n"
+                f"🚨 *EXPIRY ALERT (EXPIRES TODAY)*: Your purchased item *{product_name}* EXPIRES TODAY ({expiry_date})!\n\n"
+                f"Use it today before it goes to waste — view your items & get fresh recipe ideas here:\n"
+                f"{frontend_url}/login/customer"
+            )
+        elif days_left == 1:
+            message = (
+                f"{greeting}\n\n"
+                f"⏰ *URGENT EXPIRY REMINDER (1 DAY LEFT)*: Only 1 day left! Your purchased item *{product_name}* expires TOMORROW ({expiry_date}).\n\n"
+                f"Use it before it goes to waste — view your items & get fresh recipe ideas here:\n"
                 f"{frontend_url}/login/customer"
             )
         else:
             message = (
                 f"{greeting}\n\n"
-                f"⏰ *EXPIRY REMINDER*: Only {days_left} day(s) left! Your purchased item *{product_name}* expires on {expiry_date}.\n\n"
-                f"Use it before it goes to waste — view your items & get recipe ideas here:\n"
+                f"⏰ *DAILY EXPIRY REMINDER ({days_left} DAYS LEFT)*: Only {days_left} days left! Your purchased item *{product_name}* expires on {expiry_date}.\n\n"
+                f"Use it before it goes to waste — view your items & get fresh recipe ideas here:\n"
                 f"{frontend_url}/login/customer"
             )
 
         send_whatsapp_message(customer_phone, message)
 
+        item.last_expiry_notification_date = today
         item.expiry_notification_sent = True
-        item.save(update_fields=['expiry_notification_sent'])
+        item.save(update_fields=['last_expiry_notification_date', 'expiry_notification_sent'])
         notified_count += 1
 
-    logger.info(f"Processed {notified_count} automatic expiry/near-expiry WhatsApp notifications.")
+    logger.info(f"Processed {notified_count} automatic daily expiry WhatsApp notifications for {today}.")
     return f"Processed {notified_count} near-expiry SMS alerts."
 
 
