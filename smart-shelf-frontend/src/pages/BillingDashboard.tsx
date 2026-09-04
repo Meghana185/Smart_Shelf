@@ -209,9 +209,43 @@ export const BillingDashboard: React.FC = () => {
 
   const [expiredModalMsg, setExpiredModalMsg] = useState<string | null>(null);
 
+  // Classic supermarket scanner beep sound (crisp 1900Hz-2400Hz POS chirp)
+  const playScanSuccessBeep = () => {
+    try {
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioContextClass) return;
+      const audioCtx = new AudioContextClass();
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(1900, audioCtx.currentTime);
+      osc.frequency.setValueAtTime(2400, audioCtx.currentTime + 0.035);
+
+      gain.gain.setValueAtTime(0.35, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
+
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      osc.start(audioCtx.currentTime);
+      osc.stop(audioCtx.currentTime + 0.12);
+    } catch (e) {
+      console.warn('Audio play error', e);
+    }
+  };
+
   const playWarningBeep = () => {
     try {
-      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioContextClass) return;
+      const audioCtx = new AudioContextClass();
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
       osc.type = 'sawtooth';
@@ -325,6 +359,7 @@ export const BillingDashboard: React.FC = () => {
     price: string | number;
     stock_quantity: number;
   }) => {
+    playScanSuccessBeep();
     const priceNum = typeof product.price === 'string' ? parseFloat(product.price) : product.price;
 
     setCart((prevCart) => {
@@ -352,6 +387,9 @@ export const BillingDashboard: React.FC = () => {
   };
 
   const updateQuantity = (qrCodeId: string, delta: number) => {
+    if (delta > 0) {
+      playScanSuccessBeep();
+    }
     setCart((prev) =>
       prev
         .map((item) => {
