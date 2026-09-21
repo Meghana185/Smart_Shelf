@@ -27,12 +27,13 @@ router.register(r'products', ProductViewSet, basename='product')
 
 @api_view(['GET'])
 def setup_demo_data(request):
-    """Temporary endpoint to seed demo data on fresh PostgreSQL deployment."""
+    """Temporary endpoint to run migrations and seed demo data on fresh PostgreSQL deployment."""
     try:
+        call_command('migrate', interactive=False)
         call_command('seed_demo_data')
         return Response({
             'status': 'success',
-            'message': 'Demo data seeded! Admin: admin/adminpass | Staff: staff/staffpass',
+            'message': 'Database migrated & demo data seeded! Admin: admin/adminpass | Staff: staff/staffpass',
         })
     except Exception as e:
         return Response({'status': 'error', 'detail': str(e)}, status=500)
