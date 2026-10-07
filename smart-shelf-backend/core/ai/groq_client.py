@@ -57,7 +57,7 @@ def generate_recipes_from_ingredients(ingredient_names):
 
     try:
         client = Groq(api_key=groq_api_key)
-        models_to_try = ["llama-3.1-8b-instant", "llama-3.1-70b-versatile", "mixtral-8x7b-32768"]
+        models_to_try = ["llama3-8b-8192", "llama-3.1-8b-instant", "mixtral-8x7b-32768"]
         chat_completion = None
         for m in models_to_try:
             try:
@@ -125,7 +125,7 @@ def chat_with_recipe_assistant(messages, customer_inventory=None):
 
     try:
         client = Groq(api_key=groq_api_key)
-        models_to_try = ["llama-3.1-8b-instant", "llama-3.1-70b-versatile", "mixtral-8x7b-32768"]
+        models_to_try = ["llama3-8b-8192", "llama-3.1-8b-instant", "mixtral-8x7b-32768"]
         for m in models_to_try:
             try:
                 completion = client.chat.completions.create(
