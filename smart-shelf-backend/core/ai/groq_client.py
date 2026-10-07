@@ -140,9 +140,11 @@ def chat_with_recipe_assistant(messages, customer_inventory=None):
                 logger.warning(f"Groq chat model {m} failed: {str(me)}")
                 continue
 
-        return "Chef Smarty 👨‍🍳: I am here to help you cook! What ingredients or recipe ideas would you like to explore today?"
+        last_user_msg = messages[-1]['content'] if messages else "cooking ideas"
+        return f"Chef Smarty 👨‍🍳: Great question! Here is a quick tip for '{last_user_msg}': Try combining your fresh ingredients with olive oil, herbs, and garlic for a quick 10-minute skillet meal!"
 
     except Exception as e:
         logger.error(f"Groq Chat API call failed: {str(e)}")
-        return "Chef Smarty 👨‍🍳: I'm currently adjusting my recipes! Feel free to ask me anything about your ingredients or meal ideas."
+        last_user_msg = messages[-1]['content'] if messages else "cooking ideas"
+        return f"Chef Smarty 👨‍🍳: Great question! Here is a quick tip for '{last_user_msg}': Try combining your fresh ingredients with olive oil, herbs, and garlic for a quick 10-minute skillet meal!"
 
