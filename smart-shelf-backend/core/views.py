@@ -144,6 +144,18 @@ class StaffDeactivateView(APIView):
             'is_active': False
         }, status=status.HTTP_200_OK)
 
+    def patch(self, request, pk):
+        user = get_object_or_404(User, pk=pk)
+        is_active = request.data.get('is_active', False)
+        user.is_active = is_active
+        user.save()
+        status_str = 'activated' if is_active else 'deactivated'
+        return Response({
+            'detail': f'Staff account {status_str} successfully.',
+            'id': user.id,
+            'is_active': is_active
+        }, status=status.HTTP_200_OK)
+
 
 
 
